@@ -1,0 +1,195 @@
+<%= yield %>
+<%= render 'layouts/nav'%>
+this is show.html.erb
+<button class="btn btn-primary"></button>
+<%= @pack %>Months Subscription<br/>
+Token:<%= @token %><br/>
+Shop:<%= @shop %>
+<% @subscription %>
+<% @subscription_durations%>
+<% @cart %>
+<% if @subscription_durations %>
+  <% if (@subscription_durations.count > 0) %>
+    <table border="2">
+        <tr>
+          <th>Month</th>
+          <th>Products Information</th>
+          <th>Reset</th>
+          <th>Total</th>
+        </tr>
+        <% @subscription_durations.each_with_index do |subscription_duration,index| %>
+          <tr>
+            <td>month<%=subscription_duration.month%></td>    
+            <td><div class="months month_row_<%=subscription_duration.month%>" id="month_<%=subscription_duration.month%>">
+                <p>this is month<%=subscription_duration.month%></p>
+                <%@subscription.max_line_items_every_month.to_i.times do |times_index|%>
+                    <img class="replaceableimg" id="thumb_<%=subscription_duration.month%><%=times_index+1%>" src="http://teamonkglobal.com//img/SelectTea.jpg" title="" height="125" itemprop="image" style="width:75px">
+                <%end%>
+                <div class="total" id="total_<%=subscription_duration.month%>">0</div>
+                </div></td>
+            <td><button class="reset">Reset</button></td>
+            <td class="total_month_<%=subscription_duration.month%>">0</td>
+          </tr>       
+        <%end%>
+    </table>
+  <%end%>
+<% end %>
+<div class="container">
+  <!-- From Here onwards selections will start -->
+  <tr>
+    <%@subscription_durations.each do |subscription_duration|%>
+      <td>  
+      <h3>Select your favourite teas for Month<%=subscription_duration.month%> </h3>    
+      <div class="row" id="month_<%=subscription_duration.month%>">
+        <%@variants.each do |variant|%>
+          <div class="variants" >
+            <div class="card"> 
+              <img src="<%=variant.shopify_image_url%>" width="50" height="50"/> 
+              <label><input type="checkbox" value="<%=variant.shopify_variant_id%>" name="month_<%=subscription_duration.month%>"><%=variant.shopify_variant_title%></input></label>
+              <label>Price:Rs<%=variant.shopify_variant_price%></label>
+            </div>  
+          </div>
+        <%end%>
+      </div><br/><br/>
+      </td>
+    <%end%>
+  </tr>
+</div>    
+<%h2 = Hash.new%>
+<%@variants.each do |variant|%>
+  <%h1 = Hash.new%>
+  <%h1["price"] = variant.shopify_variant_price%>
+  <%h1["title"] = variant.shopify_variant_title%>
+  <%h1["shopify_variant_id"] = variant.shopify_variant_id%> 
+  <%h2[variant.shopify_variant_id] = h1 %>
+<%end%>
+<%=javascript_tag do %>
+  <%@subscription_durations.each do |subscription_duration|%>  
+    var month_<%=subscription_duration.month%> = [];
+  <%end%>
+  var subscription_pack = <%=raw @subscription.pack.to_i%>;
+  var subscription_durations = <%=raw @subscription_durations.pluck(:month)%>;
+  var product_informations = <%=raw h2.to_json %>;
+  var minimum_value_of_line_items_every_month = <%=@subscription.min_value_line_items_each_month%>;
+<%end %>
+
+<button id="submitToCart">Add To Cart</button>
+
+<%if @cart%>
+  <a href="/apps/Teamonk/carts/<%= @cart.id%>">Cart Items Check</a>
+<%end%>
+<script type="text/javascript">
+    var totalValue = 0;
+    var favorite = [];
+    var current_shop_url = "https://<%=@shop.shopify_domain%>";
+    var chosenItemsForDifferentMonths = {};
+    var max_line_items_allowed_every_month = <%=@subscription.max_line_items_every_month%>; 
+    $(document).ready(function() {
+        $(".submit_the_list").click(function(){
+            favorite = [];
+            $.each($("input[name='sport']:checked"), function(){                 
+                console.log($(this).val());
+                favorite.push($(this).val());
+                console.log($(this));
+                htmlElement = $(this);
+            });
+            alert("My favourite sports are: " + favorite.join(", "));
+            if(favorite.length>0){
+                totalValue = 0;
+                favorite.forEach((productId)=>{
+                  totalValue += product_informations[productId].price;
+                })
+            }
+            console.log(totalValue)        
+        });
+    });
+    var chosenItems = {};  
+    $('#submitToCart').click(function(e){
+      chosenItems = {};
+      chosenItemsForDifferentMonths = {};
+      entirelyValidated = true;
+      var shopifyCheckoutVariants = [];  
+      subscription_durations.forEach((subscriptiondurationmonth)=>{
+        chosenItems[subscriptiondurationmonth] = []  
+        $.each($("input[name= month_"+String(subscriptiondurationmonth)+"]:checked"), function(){                 
+          console.log($(this).val());
+          chosenItems[subscriptiondurationmonth].push($(this).val());
+          console.log($(this));
+        });
+      })
+      Object.keys(chosenItems).forEach((month_value)=>{
+        if(parseInt(month_value)){
+          chosenItemsForDifferentMonths[month_value] = [];
+          chosenItems[month_value].forEach((variantId)=>{
+            chosenItemsForDifferentMonths[parseInt(month_value)].push(variantId);
+          })
+        }
+      })
+      Object.keys(chosenItems).forEach((month_value)=>{  
+        chosenItems["total_for_month"+month_value] = 0;
+        console.log(chosenItems);
+        console.log(chosenItems[month_value]);
+        chosenItems[month_value].forEach(function(shopifyVariantId){
+          chosenItems["total_for_month"+month_value] += product_informations[shopifyVariantId].price;
+          shopifyCheckoutVariants.push(shopifyVariantId); 
+        })
+        console.log("the total is"+ chosenItems["total_for_month"+month_value])
+        if(chosenItems["total_for_month"+month_value] < minimum_value_of_line_items_every_month){
+          alert("sorry the lineItems can\'t satisfy to a minimum value"+ minimum_value_of_line_items_every_month+"in month"+month_value);
+          e.preventDefault();
+          entirelyValidated = false;
+        } 
+      })
+      if(entirelyValidated == false){
+        e.preventDefault();
+      }
+      else{
+        var variantsUrl = "";
+        console.log(chosenItemsForDifferentMonths); 
+        shopifyCheckoutVariants.forEach((variantId)=>{
+          variantsUrl = variantsUrl + variantId +":1,"
+        })
+        var validatedMaxItemsEveryMonth = maxItemsEveryMonthValidator(subscription_durations,max_line_items_allowed_every_month);
+        console.log("response obtained through the max Line Items Validted function is"+ validatedMaxItemsEveryMonth)
+        if(validatedMaxItemsEveryMonth == true){
+          $.ajax("/apps/Teamonk/articles/create_cart_line_item_and_subscription_duration_items",{ data: {shop_id: "<%=@shop.id%>",chosen_items_for_different_months: JSON.stringify(chosenItemsForDifferentMonths),pack: "<%=@pack%>",shopify_customer_id: "<%=@user.shopify_customer_id%>",cart_id: <%=@cart.id%>,products_informations: product_informations,subscription_id: <%=@subscription.id%>},
+              dataType: "json",
+              error: function(response, status, xhr) {
+                failed_object = response;
+                alert("no Line Items have been Created there exists inventory issues");
+              },
+              success: function(data) {
+                console.log(data);
+                if(data.msg == true){
+                console.log("successfully added to your cart the items");
+                alert("we are redirecting u to the cart index page");
+                window.location = "/apps/Teamonk/articles/thank_you_page?customerId=<%=@user.shopify_customer_id%>&cartId=<%=@cart.id%>";
+              }
+            }
+          })
+        }
+        else{
+          alert("exceeded max line items")
+        }    
+        variantsUrl = variantsUrl.substr(0,variantsUrl.length-1);  
+        //window.location.href= current_shop_url+"/cart/"+variantsUrl;
+      }
+    })
+    
+    function maxItemsEveryMonthValidator(subscriptionDurations,maxLineItemsEveryMonth){
+      var subscriptionDurations = subscriptionDurations;
+      var maxLineItemsEveryMonth = maxLineItemsEveryMonth;
+      var maxItemsEveryMonthValidated = true;
+      subscription_durations.forEach((subscription_duration_month)=>{
+        if(chosenItems[subscription_duration_month].length > maxLineItemsEveryMonth){
+          console.log("you have exceeded max items in this month"+ subscription_duration_month);
+          maxItemsEveryMonthValidated = false;
+        }
+        if(chosenItems[subscription_duration_month].length <= maxLineItemsEveryMonth){
+          console.log("you have chosen correct number of items in Month"+subscription_duration_month);
+        }
+      })
+      return maxItemsEveryMonthValidated;
+    }    
+</script>
+
