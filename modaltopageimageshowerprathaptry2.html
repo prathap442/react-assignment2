@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Bootstrap Example</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</head>
+<body> 
+
+	<div class="container">
+	  <h2>Modal Example</h2>
+	  <!-- Trigger the modal with a button -->
+	  <button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal">Open Modal</button>
+
+	  <!-- Modal -->
+	  <div class="modal fade" id="myModal" role="dialog">
+	    <div class="modal-dialog"> 
+	      <!-- Modal content-->
+	      <div class="modal-content">
+	        <div class="modal-header">
+	          <button type="button" class="close" data-dismiss="modal">&times;</button>
+	          <h4 class="modal-title">Modal Header</h4>
+	        </div>
+	        <div class="modal-body">
+	          
+	        </div>
+	        <div class="modal-footer">
+	          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+	        </div>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+	<div class = "various-months">
+	  <button class="details">Give Me Details</button>
+	</div>
+<script>
+$('document').ready(function(){
+  var subscriptionPack = 3;
+  var products_information = {"943984932": {"quantity": 3,
+                                            "price": 34.5,
+                                            "title": "a",
+                                            "image_url": "https://i.ndtvimg.com/i/2015-10/kiwi-fruit_625x350_81445871711.jpg?downsize=630:380&output-quality=70&output-format=webp"},
+                              "48374833":{"quantity": 4,
+                                          "price": 43,
+                                          "title": "b",
+                                          "image_url": "https://rukminim1.flixcart.com/image/832/832/jm6mjrk0/casserole/q/4/m/delight-casserole-gift-set-white-milton-original-imaf957y65zafhzc.jpeg?q=70"}
+                              };
+  for(i=1;i <= subscriptionPack; i++){
+		response = monthWithProductsUpdatedIntothem(i,products_information);
+		$('.modal-body').append(response);
+		var buttonHtmlNodeElement = document.createElement('button');
+		buttonHtmlNodeElement.setAttribute('class',"month_"+i)
+		buttonHtmlNodeElement.setAttribute('monthValue',i)
+		buttonHtmlNodeElement.setAttribute('onClick',`hideOtherElementsOtherThanTheTargetMonth(this,${subscriptionPack})`);
+		$('.various-months').append(buttonHtmlNodeElement);
+		buttonHtmlNodeElement.innerHTML = "Click For Month"+i;
+	}
+
+	console.log(buttonHtmlNodeElement)
+  function monthWithProductsUpdatedIntothem(monthValue,productsInformation){
+  	var ulHtmlNodeElement = document.createElement('ul');
+  	ulHtmlNodeElement.setAttribute('class','month_'+monthValue);
+  	var productsInformation = productsInformation;
+		Object.keys(productsInformation).forEach((product_id)=>{
+			let productId = product_id;
+	    let quantity = products_information[product_id]["quantity"];
+	    let price = products_information[product_id]["price"];
+	    let title = products_information[product_id]["title"];
+	    let imageUrl = products_information[product_id]["image_url"];
+	    var liHtmlNodeElement = document.createElement('li');
+	    var labelHtmlNodeElement = document.createElement('label');
+	    var inputHtmlNodeElement = document.createElement('input');
+	    var imgHtmlNodeElement = document.createElement('img');
+	    imgHtmlNodeElement.setAttribute('src',imageUrl);
+	    imgHtmlNodeElement.setAttribute('month-value',monthValue);
+	    labelHtmlNodeElement.setAttribute('for',(productId+"_"+monthValue));
+	    labelHtmlNodeElement.setAttribute('month-value',monthValue);
+	    labelHtmlNodeElement.appendChild(imgHtmlNodeElement);
+	    inputHtmlNodeElement.setAttribute('id',productId+"_"+monthValue);
+	    inputHtmlNodeElement.setAttribute('month-value',monthValue);
+	    inputHtmlNodeElement.setAttribute('product-information',JSON.stringify(productsInformation[productId]))
+	    inputHtmlNodeElement.setAttribute('productId',productId);
+	    inputHtmlNodeElement.setAttribute('type','checkbox');
+	    inputHtmlNodeElement.style.display = "none";
+	    // <li><input type="checkbox" id="cb1" monthValue="1"/>
+				 //      <label for="cb1"><img src="http://lorempixel.com/100/100" /></label>
+				 //    </li>
+			liHtmlNodeElement.appendChild(inputHtmlNodeElement);
+			liHtmlNodeElement.appendChild(labelHtmlNodeElement);
+			ulHtmlNodeElement.appendChild(liHtmlNodeElement);
+		})
+		ulHtmlNodeElement.style.display = "1px solid black"
+		return ulHtmlNodeElement;
+  }
+  $('.details').click(function(e){
+  	var productsFullInformationForEveryMonth = {};
+    for(subPack =1;subPack <= subscriptionPack; subPack++){
+    	productsFullInformationForEveryMonth[subPack] = [];
+    	$('input[type="checkbox"][month-value='+subPack+']').each(function(index){
+    		 if(this.checked == true){
+         	console.log(this);
+         	productsFullInformationForEveryMonth[subPack].push(this.getAttribute('productId'));
+         	debugger;
+         }
+    	})
+		}
+		console.log(productsFullInformationForEveryMonth);
+		console.log(products_information);
+  })    
+})
+function hideOtherElementsOtherThanTheTargetMonth(p1,subscriptionPack){
+  debugger;
+  console.log(p1);
+  console.log("you have clicked one of the months button");
+  console.log("that is "+p1.className);
+  let clickedMonthValue = p1.getAttribute('monthValue');
+  for(i=1;i<=subscriptionPack;i++){
+    $(`ul[class="month_${i}"]`).hide();
+  }
+  $(`ul[class="month_${clickedMonthValue}"]`).show();
+  $('button[data-target = "#myModal"]').click();
+}
+</script>
+</body>
+</html>
+<style>
+ul {
+  list-style-type: none;
+}
+
+li {
+  display: inline-block;
+}
+
+/*input[type="checkbox"][id^=""] {
+  display: none;
+}*/
+
+label {
+  border: 1px solid #fff;
+  padding: 10px;
+  display: block;
+  position: relative;
+  margin: 10px;
+  cursor: pointer;
+}
+
+label:before {
+  background-color: white;
+  color: white;
+  content: " ";
+  display: block;
+  border-radius: 50%;
+  border: 1px solid grey;
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  width: 25px;
+  height: 25px;
+  text-align: center;
+  line-height: 28px;
+  transition-duration: 0.4s;
+  transform: scale(0);
+}
+
+label img {
+  height: 100px;
+  width: 100px;
+  transition-duration: 0.2s;
+  transform-origin: 50% 50%;
+}
+
+:checked + label {
+  border-color: #ddd;
+}
+
+:checked + label:before {
+  content: "✓";
+  background-color: grey;
+  transform: scale(1);
+}
+
+:checked + label img {
+  transform: scale(0.9);
+  box-shadow: 0 0 5px #333;
+  z-index: -1;
+}
+</style>
